@@ -1,0 +1,178 @@
+  generator client {
+    provider = "prisma-client-js"
+  }
+
+  datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+  }
+
+  model blog {
+    blog_id     Int           @id @default(autoincrement())
+    title       String        @db.VarChar(255)
+    content     String
+    date        DateTime?     @default(now()) @db.Timestamp(6)
+    author      String        @db.VarChar(255)
+    blog_review blog_review[]
+  }
+
+  model blog_review {
+    blog_review_id Int       @id @default(autoincrement())
+    user_id        Int?
+    blog_id        Int?
+    content        String
+    date           DateTime? @default(now()) @db.Timestamp(6)
+    blog           blog?     @relation(fields: [blog_id], references: [blog_id], onDelete: Cascade, onUpdate: NoAction)
+    users          users?    @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+  }
+
+  model categories {
+    category_id Int        @id @default(autoincrement())
+    category    String     @db.VarChar(255)
+    products    products[]
+  }
+
+  model collection {
+    collection_id     Int        @id @default(autoincrement())
+    title             String     @db.VarChar(255)
+    image             String?
+    short_description String?
+    products          products[]
+  }
+
+  model image {
+    image_id   Int       @id @default(autoincrement())
+    product_id Int?
+    image      String
+    products   products? @relation(fields: [product_id], references: [product_id], onDelete: Cascade, onUpdate: NoAction)
+  }
+
+  /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+  model order_detail {
+    order_detail_id    Int               @id @default(autoincrement())
+    order_id           Int?
+    product_variant_id Int?
+    quantity           Int
+    price              Decimal           @db.Decimal(10, 2)
+    orders             orders?           @relation(fields: [order_id], references: [order_id], onDelete: Cascade, onUpdate: NoAction)
+    product_variants   product_variants? @relation(fields: [product_variant_id], references: [product_variant_id], onDelete: Cascade, onUpdate: NoAction)
+    reviews            review[]
+  }
+
+  /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+  model orders {
+    order_id       Int              @id @default(autoincrement())
+    user_id        Int?
+    date           DateTime?        @default(now()) @db.Timestamp(6)
+    status         String           @db.VarChar(50)
+    phone_number   String?          @db.VarChar(20)
+    address        String?
+    voucher_id     Int?
+    total          Decimal          @db.Decimal(10, 2)
+    order_detail   order_detail[]
+    users          users?           @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+    payment_method payment_method[]
+  }
+
+  /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+  model payment_method {
+    payment_method_id Int       @id @default(autoincrement())
+    order_id          Int?
+    payment_method    String    @db.VarChar(50)
+    payment_status    String    @db.VarChar(50)
+    update_at         DateTime? @default(now()) @db.Timestamp(6)
+    orders            orders?   @relation(fields: [order_id], references: [order_id], onDelete: Cascade, onUpdate: NoAction)
+  }
+
+  model product_color {
+    color_id         Int                @id @default(autoincrement())
+    color_name       String             @db.VarChar(100)
+    hex_color        String?            @db.VarChar(10)
+    product_variants product_variants[]
+  }
+
+  model product_size {
+    size_id          Int                @id @default(autoincrement())
+    size_name        String             @db.VarChar(50)
+    product_variants product_variants[]
+  }
+
+  /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+  model product_variants {
+    product_variant_id Int            @id @default(autoincrement())
+    product_id         Int?
+    color_id           Int?
+    size_id            Int?
+    image_id           Int?
+    stock              Int
+    order_detail       order_detail[]
+    product_color      product_color? @relation(fields: [color_id], references: [color_id], onUpdate: NoAction)
+    products           products?      @relation(fields: [product_id], references: [product_id], onDelete: Cascade, onUpdate: NoAction)
+    product_size       product_size?  @relation(fields: [size_id], references: [size_id], onUpdate: NoAction)
+  }
+
+  model products {
+    product_id        Int                @id @default(autoincrement())
+    name              String             @db.VarChar(255)
+    type              String?            @db.VarChar(50)
+    base_price        Decimal            @db.Decimal(10, 2)
+    sale_price        Decimal?           @db.Decimal(10, 2)
+    description       String?
+    short_description String?
+    main_image        String?
+    status            Boolean?           @default(true)
+    collection_id     Int?
+    category_id       Int?
+    slug       String  @unique // Thêm trường slug, đảm bảo nó là duy nhất
+    image             image[]
+    product_variants  product_variants[]
+    categories        categories?        @relation(fields: [category_id], references: [category_id], onUpdate: NoAction)
+    collection        collection?        @relation(fields: [collection_id], references: [collection_id], onUpdate: NoAction)
+  }
+
+  /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+  model review {
+    review_id       Int            @id @default(autoincrement())
+    order_detail_id Int?
+    user_id         Int?
+    content         String?
+    rating          Int?
+    date            DateTime?      @default(now()) @db.Timestamp(6)
+    order_detail    order_detail?  @relation(fields: [order_detail_id], references: [order_detail_id], onDelete: Cascade, onUpdate: NoAction)
+    users           users?         @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+    review_image    review_image[]
+  }
+
+  model review_image {
+    review_image_id Int     @id @default(autoincrement())
+    review_id       Int?
+    review_image    String
+    review          review? @relation(fields: [review_id], references: [review_id], onDelete: Cascade, onUpdate: NoAction)
+  }
+
+  /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+  model users {
+    user_id      Int           @id @default(autoincrement())
+    name         String        @db.VarChar(255)
+    email        String        @unique @db.VarChar(255)
+    password     String        @db.VarChar(255)
+    role         String        @db.VarChar(50)
+    phone_number String?       @db.VarChar(20)
+    active       Boolean?      @default(true)
+    blog_review  blog_review[]
+    orders       orders[]
+    review       review[]
+  }
+
+  /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+  model voucher {
+    voucher_id      Int      @id @default(autoincrement())
+    code            String   @unique @db.VarChar(50)
+    day_start       DateTime @db.Date
+    day_end         DateTime @db.Date
+    value           Decimal  @db.Decimal(10, 2)
+    usage_limit     Int?
+    min_order_value Decimal? @db.Decimal(10, 2)
+    status          Boolean? @default(true)
+    description     String?
+  }
